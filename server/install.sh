@@ -16,4 +16,4 @@ cp "$PLIST" ~/Library/LaunchAgents/
 launchctl unload ~/Library/LaunchAgents/"$PLIST" 2>/dev/null || true
 launchctl load ~/Library/LaunchAgents/"$PLIST"
 
-echo "Done. Server will start on port 9902."
+echo "Done. Server will start on port 9906."

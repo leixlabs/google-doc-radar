@@ -74,7 +74,7 @@ a { color: #1a73e8; }
   <dt>limit</dt>
   <dd>Max results (default: 1000)</dd>
 </dl>
-<pre><code>curl "http://localhost:9902/api/read?document_id=1BxiMVs0XRA5n"</code></pre>
+<pre><code>curl "http://localhost:9906/api/read?document_id=1BxiMVs0XRA5n"</code></pre>
 
 <h3>Query Documents (Markdown)</h3>
 <div class="endpoint"><span class="method method-get">GET</span> /api/read/md</div>
@@ -94,21 +94,21 @@ a { color: #1a73e8; }
   <dt>limit</dt>
   <dd>Max results (default: 20)</dd>
 </dl>
-<pre><code>curl "http://localhost:9902/api/search?q=meeting+notes"</code></pre>
+<pre><code>curl "http://localhost:9906/api/search?q=meeting+notes"</code></pre>
 
 <h2>Examples</h2>
 <pre><code># Ingest a document
-curl -X POST http://localhost:9902/api/docs \
+curl -X POST http://localhost:9906/api/docs \
   -H 'Content-Type: application/json' \
   -d '{"document_id":"abc123","title":"My Doc","content":"Hello world"}'
 
 # Get all tabs of a document
-curl "http://localhost:9902/api/read?document_id=abc123"
+curl "http://localhost:9906/api/read?document_id=abc123"
 
 # Search across all documents
-curl "http://localhost:9902/api/search?q=hello"
+curl "http://localhost:9906/api/search?q=hello"
 
 # Read as markdown
-curl "http://localhost:9902/api/read/md?from=2026-01-01"</code></pre>
+curl "http://localhost:9906/api/read/md?from=2026-01-01"</code></pre>
 </body>
 </html>

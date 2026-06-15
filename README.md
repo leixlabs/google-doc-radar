@@ -9,7 +9,7 @@ Chrome Extension (docs.google.com)
   │ content.js: extract document content from DOM
   │ background.js: relay to server via HTTP
   ▼
-Go Server (localhost:9902)
+Go Server (localhost:9906)
   │ POST /api/docs — ingest
   │ GET /api/read — query (JSON/MD/HTML)
   │ GET /api/search — full-text search
@@ -32,7 +32,7 @@ SQLite (gdoc.db)
 ```bash
 cd server
 CGO_ENABLED=1 go build -o gdoc-radar-server .
-./gdoc-radar-server --data-dir ./data --port 9902
+./gdoc-radar-server --data-dir ./data --port 9906
 ```
 
 Or with Docker:
@@ -59,7 +59,7 @@ cd server && bash install.sh
 ### POST /api/docs — Ingest
 
 ```bash
-curl -X POST http://localhost:9902/api/docs \
+curl -X POST http://localhost:9906/api/docs \
   -H 'Content-Type: application/json' \
   -d '{"document_id":"abc123","title":"My Doc","content":"Hello world"}'
 ```
@@ -68,30 +68,30 @@ curl -X POST http://localhost:9902/api/docs \
 
 ```bash
 # By document ID (returns all tabs)
-curl "http://localhost:9902/api/read?document_id=abc123"
+curl "http://localhost:9906/api/read?document_id=abc123"
 
 # By tab
-curl "http://localhost:9902/api/read?document_id=abc123&tab_id=t.0"
+curl "http://localhost:9906/api/read?document_id=abc123&tab_id=t.0"
 
 # Time range
-curl "http://localhost:9902/api/read?from=2026-01-01&to=2026-06-30"
+curl "http://localhost:9906/api/read?from=2026-01-01&to=2026-06-30"
 ```
 
 ### GET /api/search — Search
 
 ```bash
-curl "http://localhost:9902/api/search?q=meeting+notes"
+curl "http://localhost:9906/api/search?q=meeting+notes"
 ```
 
 ### GET /api/read/md — Markdown
 
 ```bash
-curl "http://localhost:9902/api/read/md?document_id=abc123"
+curl "http://localhost:9906/api/read/md?document_id=abc123"
 ```
 
 ### GET /api/read/html — HTML with outline
 
-Open in browser: `http://localhost:9902/api/read/html?document_id=abc123`
+Open in browser: `http://localhost:9906/api/read/html?document_id=abc123`
 
 ## Data Model
 
