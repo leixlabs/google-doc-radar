@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Google Doc Radar — API</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; color: #333; line-height: 1.6; }
+h1 { font-size: 28px; margin-bottom: 8px; }
+.subtitle { color: #666; margin-bottom: 32px; }
+h2 { font-size: 20px; margin: 28px 0 12px; color: #1a73e8; }
+h3 { font-size: 16px; margin: 16px 0 8px; }
+.endpoint { background: #f8f9fa; border-radius: 8px; padding: 12px 16px; margin: 8px 0; font-family: 'SF Mono', Monaco, monospace; font-size: 14px; }
+.method { font-weight: 700; }
+.method-post { color: #ea4335; }
+.method-get { color: #34a853; }
+.params { margin: 8px 0 8px 16px; }
+.params dt { font-weight: 600; font-family: 'SF Mono', Monaco, monospace; font-size: 13px; }
+.params dd { margin: 2px 0 8px 16px; color: #555; }
+pre { background: #f8f9fa; border-radius: 6px; padding: 12px; overflow-x: auto; font-size: 13px; margin: 8px 0; }
+code { font-family: 'SF Mono', Monaco, monospace; }
+a { color: #1a73e8; }
+</style>
+</head>
+<body>
+<h1>📡 Google Doc Radar</h1>
+<p class="subtitle">Local API for ingesting and querying Google Docs content</p>
+
+<h2>Write</h2>
+
+<h3>Ingest Document</h3>
+<div class="endpoint"><span class="method method-post">POST</span> /api/docs</div>
+<p>Upsert a document (or a single tab of a multi-tab document).</p>
+<dl class="params">
+  <dt>document_id <code>string</code> <em>required</em></dt>
+  <dd>Google Doc ID (from the URL)</dd>
+  <dt>tab_id <code>string</code></dt>
+  <dd>Tab identifier (e.g. <code>t.0</code>). Empty string for single-tab docs.</dd>
+  <dt>tab_name <code>string</code></dt>
+  <dd>Display name of the tab</dd>
+  <dt>title <code>string</code></dt>
+  <dd>Document title</dd>
+  <dt>content <code>string</code></dt>
+  <dd>Extracted text content</dd>
+  <dt>url <code>string</code></dt>
+  <dd>Canonical document URL</dd>
+</dl>
+<pre><code>{
+  "document_id": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms",
+  "tab_id": "t.0",
+  "tab_name": "Meeting Notes",
+  "title": "Q4 Planning",
+  "content": "Full text of the document...",
+  "url": "https://docs.google.com/document/d/1BxiMVs0XRA5n/edit"
+}</code></pre>
+<p>Response: <code>{"upserted": 1}</code></p>
+
+<h2>Read</h2>
+
+<h3>Query Documents (JSON)</h3>
+<div class="endpoint"><span class="method method-get">GET</span> /api/read</div>
+<dl class="params">
+  <dt>document_id / doc_id</dt>
+  <dd>Filter by document ID</dd>
+  <dt>tab_id</dt>
+  <dd>Filter by tab ID</dd>
+  <dt>tab_name</dt>
+  <dd>Filter by tab name (substring match)</dd>
+  <dt>from / since / start</dt>
+  <dd>Start time (YYYY-MM-DD, RFC3339, or Unix timestamp)</dd>
+  <dt>to / until / end</dt>
+  <dd>End time</dd>
+  <dt>limit</dt>
+  <dd>Max results (default: 1000)</dd>
+</dl>
+<pre><code>curl "http://localhost:9902/api/read?document_id=1BxiMVs0XRA5n"</code></pre>
+
+<h3>Query Documents (Markdown)</h3>
+<div class="endpoint"><span class="method method-get">GET</span> /api/read/md</div>
+<p>Same parameters as <code>/api/read</code>. Defaults to last 7 days if no time range given.</p>
+
+<h3>Query Documents (HTML)</h3>
+<div class="endpoint"><span class="method method-get">GET</span> /api/read/html</div>
+<p>Same parameters as <code>/api/read</code>. Renders as an HTML page with outline sidebar.</p>
+
+<h2>Search</h2>
+
+<h3>Full-text Search</h3>
+<div class="endpoint"><span class="method method-get">GET</span> /api/search</div>
+<dl class="params">
+  <dt>q / query <code>string</code> <em>required</em></dt>
+  <dd>Search term (matches against title and content)</dd>
+  <dt>limit</dt>
+  <dd>Max results (default: 20)</dd>
+</dl>
+<pre><code>curl "http://localhost:9902/api/search?q=meeting+notes"</code></pre>
+
+<h2>Examples</h2>
+<pre><code># Ingest a document
+curl -X POST http://localhost:9902/api/docs \
+  -H 'Content-Type: application/json' \
+  -d '{"document_id":"abc123","title":"My Doc","content":"Hello world"}'
+
+# Get all tabs of a document
+curl "http://localhost:9902/api/read?document_id=abc123"
+
+# Search across all documents
+curl "http://localhost:9902/api/search?q=hello"
+
+# Read as markdown
+curl "http://localhost:9902/api/read/md?from=2026-01-01"</code></pre>
+</body>
+</html>

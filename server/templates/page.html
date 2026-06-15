@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.PageTitle}}</title>
+<style>
+:root { --sidebar-w: 240px; --accent: #4285f4; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #333; line-height: 1.6; display: flex; }
+
+/* Sidebar */
+#sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; overflow-y: auto; background: #f8f9fa; border-right: 1px solid #e0e0e0; padding: 16px 12px; font-size: 13px; z-index: 10; }
+#sidebar h2 { font-size: 14px; color: #666; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+#sidebar a { display: block; color: #333; text-decoration: none; padding: 4px 8px; border-radius: 4px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#sidebar a:hover { background: #e8eaed; }
+#sidebar a.active { background: var(--accent); color: #fff; }
+#sidebar a.indent { padding-left: 24px; font-size: 12px; }
+
+/* Content */
+#content { margin-left: var(--sidebar-w); padding: 32px 48px; max-width: 800px; flex: 1; }
+#content h2 { font-size: 22px; margin: 32px 0 12px; color: #1a73e8; border-bottom: 1px solid #e0e0e0; padding-bottom: 6px; }
+#content h2:first-child { margin-top: 0; }
+#content h3 { font-size: 17px; margin: 20px 0 8px; color: #333; }
+#content p { margin: 8px 0; }
+#content a { color: var(--accent); text-decoration: none; }
+#content a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  #sidebar { display: none; }
+  #content { margin-left: 0; padding: 16px; }
+}
+
+/* Scroll margin for headings */
+h2[id], h3[id] { scroll-margin-top: 16px; }
+</style>
+</head>
+<body>
+<nav id="sidebar">
+  <h2>Outline</h2>
+  <div id="outline"></div>
+</nav>
+<main id="content">
+{{.Content}}
+</main>
+<script>
+(function() {
+  const sidebar = document.getElementById('outline');
+  const content = document.getElementById('content');
+  const headings = content.querySelectorAll('h2[id], h3[id]');
+
+  headings.forEach((h) => {
+    const a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    if (h.tagName === 'H3') a.classList.add('indent');
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      h.scrollIntoView({ behavior: 'smooth' });
+    });
+    sidebar.appendChild(a);
+  });
+
+  // Scroll tracking
+  const links = sidebar.querySelectorAll('a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        links.forEach((l) => l.classList.remove('active'));
+        const id = entry.target.id;
+        const link = sidebar.querySelector('a[href="#' + id + '"]');
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+
+  headings.forEach((h) => observer.observe(h));
+})();
+</script>
+</body>
+</html>

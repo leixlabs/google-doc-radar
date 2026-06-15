@@ -1,0 +1,8 @@
+services:
+  gdoc-radar-server:
+    build: ./server
+    ports:
+      - "9906:9906"
+    volumes:
+      - /Users/lei/dev/db/google-doc-radar:/data
+    restart: unless-stopped

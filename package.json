@@ -1,0 +1,15 @@
+{
+  "name": "google-doc-radar",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Capture Google Docs content and sync to local server",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "generate-icons": "node scripts/generate-icons.js"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "sharp": "^0.33.5"
+  }
+}
