@@ -54,7 +54,10 @@ a { color: #1a73e8; }
   "content": "Full text of the document...",
   "url": "https://docs.google.com/document/d/1BxiMVs0XRA5n/edit"
 }</code></pre>
-<p>Response: <code>{"upserted": 1}</code></p>
+<p>Response: <code>{"upserted": 1, "markdown": "/path/to/md/Q4 Planning [1BxiMV...].md"}</code></p>
+<p><code>markdown</code> is the mirrored file path, or <code>null</code> when the server runs
+   without <code>--md-dir</code>. A mirroring failure never fails the ingest — the DB write wins
+   and the error is returned as <code>markdown_error</code>.</p>
 
 <h2>Read</h2>
 

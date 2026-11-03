@@ -5,4 +5,10 @@ services:
       - "9906:9906"
     volumes:
       - /Users/lei/dev/db/google-doc-radar:/data
+      # Markdown mirror output, visible on the host at the same path.
+      - /Users/lei/dev/db/google-doc-radar/md:/md
+    environment:
+      # Every ingested doc is also written to /md as a Markdown file.
+      # Set to an empty string to disable the mirror.
+      - GDOC_MD_DIR=/md
     restart: unless-stopped

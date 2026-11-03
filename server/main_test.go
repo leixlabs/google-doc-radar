@@ -24,7 +24,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 
 func TestPostAndGetDocs(t *testing.T) {
 	db := setupTestDB(t)
-	handler := handlePostDocs(db)
+	handler := handlePostDocs(db, nil)
 
 	// Ingest a document
 	body := `{"document_id":"doc1","tab_id":"t.0","tab_name":"Notes","title":"My Doc","content":"Hello world","url":"https://docs.google.com/document/d/doc1/edit"}`
@@ -68,7 +68,7 @@ func TestPostAndGetDocs(t *testing.T) {
 
 func TestUpsertConflict(t *testing.T) {
 	db := setupTestDB(t)
-	handler := handlePostDocs(db)
+	handler := handlePostDocs(db, nil)
 
 	// Insert
 	body := `{"document_id":"doc1","title":"V1","content":"old"}`
@@ -102,7 +102,7 @@ func TestUpsertConflict(t *testing.T) {
 
 func TestMultiTab(t *testing.T) {
 	db := setupTestDB(t)
-	handler := handlePostDocs(db)
+	handler := handlePostDocs(db, nil)
 
 	// Insert two tabs
 	for _, tab := range []string{`{"document_id":"doc1","tab_id":"t.0","tab_name":"Tab A","content":"Content A"}`, `{"document_id":"doc1","tab_id":"t.1","tab_name":"Tab B","content":"Content B"}`} {
@@ -144,7 +144,7 @@ func TestMultiTab(t *testing.T) {
 
 func TestSearch(t *testing.T) {
 	db := setupTestDB(t)
-	postHandler := handlePostDocs(db)
+	postHandler := handlePostDocs(db, nil)
 
 	// Insert docs
 	for _, doc := range []string{
@@ -194,7 +194,7 @@ func TestSearchRequiresQuery(t *testing.T) {
 
 func TestReadWithTimeRange(t *testing.T) {
 	db := setupTestDB(t)
-	postHandler := handlePostDocs(db)
+	postHandler := handlePostDocs(db, nil)
 
 	body := `{"document_id":"doc1","title":"Test","content":"content"}`
 	req := httptest.NewRequest("POST", "/api/docs", bytes.NewBufferString(body))
@@ -218,7 +218,7 @@ func TestReadWithTimeRange(t *testing.T) {
 
 func TestReadMarkdown(t *testing.T) {
 	db := setupTestDB(t)
-	postHandler := handlePostDocs(db)
+	postHandler := handlePostDocs(db, nil)
 
 	body := `{"document_id":"doc1","title":"My Notes","content":"Hello world","url":"https://docs.google.com/document/d/doc1/edit"}`
 	req := httptest.NewRequest("POST", "/api/docs", bytes.NewBufferString(body))
@@ -262,7 +262,7 @@ func TestAPIDocsEndpoint(t *testing.T) {
 
 func TestPostRequiresDocumentID(t *testing.T) {
 	db := setupTestDB(t)
-	handler := handlePostDocs(db)
+	handler := handlePostDocs(db, nil)
 
 	body := `{"title":"No ID"}`
 	req := httptest.NewRequest("POST", "/api/docs", bytes.NewBufferString(body))
@@ -277,7 +277,7 @@ func TestPostRequiresDocumentID(t *testing.T) {
 
 func TestTabNameFilter(t *testing.T) {
 	db := setupTestDB(t)
-	postHandler := handlePostDocs(db)
+	postHandler := handlePostDocs(db, nil)
 
 	for _, doc := range []string{
 		`{"document_id":"d1","tab_id":"t.0","tab_name":"Meeting Notes","content":"A"}`,

@@ -13,6 +13,8 @@
         <string>9905</string>
         <string>--host</string>
         <string>127.0.0.1</string>
+        <string>--md-dir</string>
+        <string>/Users/lei/dev/db/google-doc-radar/md</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

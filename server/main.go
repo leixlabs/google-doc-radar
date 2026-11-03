@@ -104,7 +104,7 @@ func initDB(dataDir string) (*sql.DB, error) {
 
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
-func handlePostDocs(db *sql.DB) http.HandlerFunc {
+func handlePostDocs(db *sql.DB, exp *mdExporter) http.HandlerFunc {
 	const upsertSQL = `
 INSERT INTO documents (document_id, tab_id, tab_name, title, content, url, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -137,9 +137,47 @@ ON CONFLICT(document_id, tab_id) DO UPDATE SET
 			return
 		}
 		n, _ := res.RowsAffected()
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"upserted":%d}`, n)
+
+		// Mirror to Markdown on disk. The DB write above already succeeded, so a
+		// mirroring failure is reported but never fails the request.
+		mdPath := ""
+		mdErr := ""
+		if exp != nil {
+			doc, err := fetchDoc(db, req.DocumentID, tabID)
+			if err != nil {
+				mdErr = err.Error()
+				log.Printf("markdown mirror: reload doc %s/%s: %v", req.DocumentID, tabID, err)
+			} else if p, err := exp.Write(*doc); err != nil {
+				mdErr = err.Error()
+				log.Printf("markdown mirror: write doc %s/%s: %v", req.DocumentID, tabID, err)
+			} else {
+				mdPath = p
+			}
+		}
+
+		resp := map[string]interface{}{"upserted": n, "markdown": nil}
+		if mdPath != "" {
+			resp["markdown"] = mdPath
+		}
+		if mdErr != "" {
+			resp["markdown_error"] = mdErr
+		}
+		writeJSON(w, resp)
 	}
+}
+
+// fetchDoc loads a single row after an upsert, so the Markdown mirror gets the
+// DB-assigned created_at/updated_at values instead of locally guessed ones.
+func fetchDoc(db *sql.DB, documentID, tabID string) (*ReadDoc, error) {
+	row := db.QueryRow(
+		"SELECT id, document_id, tab_id, tab_name, title, content, url, created_at, updated_at FROM documents WHERE document_id = ? AND tab_id = ?",
+		documentID, tabID,
+	)
+	var d ReadDoc
+	if err := row.Scan(&d.ID, &d.DocumentID, &d.TabID, &d.TabName, &d.Title, &d.Content, &d.URL, &d.CreatedAt, &d.UpdatedAt); err != nil {
+		return nil, err
+	}
+	return &d, nil
 }
 
 func parseTimeFlexible(s string) (time.Time, error) {
@@ -491,6 +529,8 @@ func main() {
 	dataDir := flag.String("data-dir", ".", "directory for gdoc.db")
 	port := flag.Int("port", 9906, "server port")
 	host := flag.String("host", "0.0.0.0", "server host")
+	mdDir := flag.String("md-dir", os.Getenv("GDOC_MD_DIR"), "directory to mirror each document as a Markdown file (empty disables; env GDOC_MD_DIR)")
+	mdBackfill := flag.Bool("md-backfill", false, "on startup, export all existing documents to --md-dir")
 	flag.Parse()
 
 	db, err := initDB(*dataDir)
@@ -499,13 +539,31 @@ func main() {
 	}
 	defer db.Close()
 
+	exp, err := newMDExporter(*mdDir)
+	if err != nil {
+		log.Fatalf("markdown mirror: %v", err)
+	}
+	if exp != nil {
+		log.Printf("markdown mirror: %s", exp.Dir())
+		if *mdBackfill {
+			n, err := exp.Backfill(db)
+			if err != nil {
+				log.Printf("markdown backfill: %v (exported %d)", err, n)
+			} else {
+				log.Printf("markdown backfill: exported %d documents", n)
+			}
+		}
+	} else if *mdBackfill {
+		log.Printf("markdown backfill: ignored, --md-dir not set")
+	}
+
 	// Load templates
 	pageHTML, _ := os.ReadFile(filepath.Join("templates", "page.html"))
 	apiDocsHTML, _ := os.ReadFile(filepath.Join("templates", "api-docs.html"))
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", handleAPIDocs(string(apiDocsHTML)))
-	mux.HandleFunc("POST /api/docs", handlePostDocs(db))
+	mux.HandleFunc("POST /api/docs", handlePostDocs(db, exp))
 	mux.HandleFunc("GET /api/read", handleReadDocs(db))
 	mux.HandleFunc("GET /api/read/md", handleReadMD(db))
 	mux.HandleFunc("GET /api/read/html", handleReadHTML(db, string(pageHTML)))
