@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Google Doc Radar",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Capture Google Docs content and sync to local server",
   "permissions": [
     "webNavigation",

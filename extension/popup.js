@@ -23,7 +23,8 @@ function renderStatus(data) {
     rows.push(row('Status', data.lastError, 'err'));
   } else {
     const upserted = data.lastUpserted != null ? ` (${data.lastUpserted} rows)` : '';
-    rows.push(row('Status', `Saved${upserted}`, 'ok'));
+    const fmt = data.lastFormat ? ` · ${data.lastFormat}` : '';
+    rows.push(row('Status', `Saved${upserted}${fmt}`, 'ok'));
   }
 
   statusEl.innerHTML = rows.join('');
@@ -39,6 +40,11 @@ function esc(s) {
   return d.innerHTML;
 }
 
+function resetButton() {
+  extractBtn.disabled = false;
+  extractBtn.textContent = 'Extract Current Tab';
+}
+
 // Load current status
 chrome.runtime.sendMessage({ action: 'getStatus' }, renderStatus);
 
@@ -47,30 +53,36 @@ extractBtn.addEventListener('click', () => {
   extractBtn.disabled = true;
   extractBtn.textContent = 'Extracting…';
 
+  // Only accept a status produced at or after this click, otherwise we would
+  // re-render a stale result from an earlier run (e.g. a previous 403 error).
+  const startedAt = Date.now() - 1500;
+
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { action: 'extract' });
+    const tab = tabs && tabs[0];
+    if (!tab || !/^https:\/\/docs\.google\.com\/document\//.test(tab.url || '')) {
+      statusEl.innerHTML = '<div class="muted">Open a Google Doc first</div>';
+      resetButton();
+      return;
     }
+    chrome.tabs.sendMessage(tab.id, { action: 'extract' }, () => {
+      void chrome.runtime.lastError; // page may not have the content script yet
+    });
   });
 
-  // Poll for updated status
   let attempts = 0;
+  const maxAttempts = 25; // ~20s safety timeout
   const poll = setInterval(() => {
     attempts++;
     chrome.runtime.sendMessage({ action: 'getStatus' }, (data) => {
-      if (data && data.lastSyncAt) {
+      const t = data && data.lastSyncAt ? new Date(data.lastSyncAt).getTime() : 0;
+      if (data && data.lastSyncAt && t >= startedAt) {
         renderStatus(data);
-        if (attempts >= 3) {
-          clearInterval(poll);
-          extractBtn.disabled = false;
-          extractBtn.textContent = 'Extract Current Tab';
-        }
+        clearInterval(poll);
+        resetButton();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(poll);
+        resetButton();
       }
     });
-    if (attempts >= 6) {
-      clearInterval(poll);
-      extractBtn.disabled = false;
-      extractBtn.textContent = 'Extract Current Tab';
-    }
   }, 800);
 });

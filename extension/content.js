@@ -11,10 +11,14 @@
   // ── URL parsing ──────────────────────────────────────────────────────────
 
   function parseDocURL(url) {
-    const m = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
+    const u = new URL(url);
+    // Support both /document/d/<id> and the account-scoped
+    // /document/u/<n>/d/<id> form used when several Google accounts are signed in.
+    const m = u.pathname.match(/\/document\/(?:u\/(\d+)\/)?d\/([a-zA-Z0-9_-]+)/);
     if (!m) return null;
-    const tabId = new URL(url).searchParams.get('tab') || null;
-    return { documentId: m[1], tabId };
+    const authUser = m[1] != null ? m[1] : (u.searchParams.get('authuser') || null);
+    const tabId = u.searchParams.get('tab') || null;
+    return { documentId: m[2], tabId, authUser };
   }
 
   // ── Metadata from DOM (title + tab name — no canvas needed) ─────────────
@@ -26,8 +30,8 @@
       if (v) return v;
     }
     const dt = document.title || '';
-    if (dt.endsWith(' - Google 文件') || dt.endsWith(' - Google Docs')) {
-      return dt.replace(/ - Google (文件|Docs)$/, '').trim();
+    if (/ - Google (文件|文档|Docs)$/.test(dt)) {
+      return dt.replace(/ - Google (文件|文档|Docs)$/, '').trim();
     }
     return dt.trim() || null;
   }
@@ -58,6 +62,7 @@
       action: 'fetchAndSave',
       documentId: urlInfo.documentId,
       tabId: urlInfo.tabId,
+      authUser: urlInfo.authUser,
       tabName: tabName,
       title: title,
       url: location.href.split('?')[0],
