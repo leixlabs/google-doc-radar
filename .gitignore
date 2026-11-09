@@ -3,5 +3,6 @@ node_modules/
 *.db-journal
 *.db-wal
 server/gdoc-radar-server
+server/google-doc-radar-server
 .DS_Store
 fixture/
